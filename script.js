@@ -5,13 +5,13 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 
 // ---- PUT YOUR FIREBASE CONFIG HERE ----
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
+  authDomain: "shelkino.firebaseapp.com",
+  databaseURL: "https://shelkino-default-rtdb.firebaseio.com",  // Исправлено: lowercase
+  projectId: "shelkino",
+  storageBucket: "shelkino.firebasestorage.app",
+  messagingSenderId: "380999159158",
+  appId: "1:380999159158:web:eb659039985267cdb3fe57"
 };
 // ---------------------------------------
 
@@ -534,3 +534,4 @@ function performSearch(q) {
 
 // ---------------- initial small helpers ----------------
 window.showToast = showToast;
+
