@@ -7,11 +7,11 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 const firebaseConfig = {
   apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
   authDomain: "shelkino.firebaseapp.com",
-  databaseURL: "https://shelkino-default-rtdb.firebaseio.com", // Добавьте это
   projectId: "shelkino",
   storageBucket: "shelkino.firebasestorage.app",
   messagingSenderId: "380999159158",
-  appId: "1:380999159158:web:eb659039985267cdb3fe57"
+  appId: "1:380999159158:web:eb659039985267cdb3fe57",
+  measurementId: "G-GLHN9C443L"
 };
 // ---------------------------------------
 
@@ -534,5 +534,6 @@ function performSearch(q) {
 
 // ---------------- initial small helpers ----------------
 window.showToast = showToast;
+
 
 
