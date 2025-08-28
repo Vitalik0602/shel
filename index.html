@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Щёлкино — Городской портал</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="script.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">Щ</div>
+        <div>
+          <strong>Щёлкино</strong>
+          <div class="muted">Городской портал — всё для жителей</div>
+        </div>
+      </div>
+      <nav>
+        <a data-route="home">Главная</a>
+        <a data-route="news">Новости</a>
+        <a data-route="jobs">Вакансии</a>
+        <a data-route="schedule">Расписание</a>
+        <a data-route="chat">Чат</a>
+        <a data-route="services">Сервисы</a>
+      </nav>
+      <div class="search">
+        <input id="globalSearch" placeholder="Поиск...">
+      </div>
+    </header>
+    <div class="grid">
+      <main id="pageContent"></main>  <!-- Hero теперь рендерится в JS -->
+      <aside>
+        <section class="card ads">
+          <h3>Реклама</h3>
+          <div class="ad">Поддержите проект</div>
+          <div class="ad">Зона рекламного баннера 1</div>
+          <div class="ad">Зона рекламного баннера 2</div>
+        </section>
+        <section class="card" style="margin-top:12px">
+          <h3>Быстрые ссылки</h3>
+          <ul>
+            <li>Коммунальные службы</li>
+            <li>Вакансии</li>
+            <li>Контакты экстренных служб</li>
+            <li>Карта города</li>
+          </ul>
+        </section>
+        <section class="card" style="margin-top:12px">
+          <h3>Публичные уведомления</h3>
+          <p id="announcements">Здесь будут важные объявления от администрации.</p>
+        </section>
+      </aside>
+    </div>
+    <footer>© Портал Щёлкино — 2025</footer>
+  </div>
+  <div id="toast" class="toast" style="display:none"></div>
+</body>
+</html>
