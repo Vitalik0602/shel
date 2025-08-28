@@ -19,7 +19,7 @@
           </div>
         </div>
         <nav>
-          <a data-route="home">Главная</a>
+          <a data-route="home" class="active">Главная</a>
           <a data-route="news">Новости</a>
           <a data-route="jobs">Вакансии</a>
           <a data-route="schedule">Расписание</a>
@@ -37,15 +37,14 @@
         </main>
         <aside>
           <div class="ads">
-            <li>Вакансии</li>
             <div class="ad">Зона рекламного баннера 1</div>
             <div class="ad">Зона рекламного баннера 2</div>
           </div>
           <div class="card" style="margin-top:12px">
             <h3>Быстрые ссылки</h3>
             <ul>
-              <li>Вакансии</li>
-              <li>Карта города</li>
+              <li style="cursor: pointer;" id="asideJobsLink">Вакансии</li>
+              <li style="cursor: pointer;" id="asideMapLink">Карта города</li>
             </ul>
           </div>
           <div class="card" style="margin-top:12px">
