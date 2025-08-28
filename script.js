@@ -7,7 +7,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 const firebaseConfig = {
   apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
   authDomain: "shelkino.firebaseapp.com",
-  databaseURL: "https://shelkino-default-rtdb.europe-west1.firebasedatabase.app", // ✅ правильный URL
+  databaseURL: "https://shelkino-default-rtdb.firebasedatabase.app", // ✅ правильный URL
   projectId: "shelkino",
   storageBucket: "shelkino.appspot.com", // ⚠️ у вас было .firebasestorage.app — надо .appspot.com
   messagingSenderId: "380999159158",
@@ -535,6 +535,7 @@ function performSearch(q) {
 
 // ---------------- initial small helpers ----------------
 window.showToast = showToast;
+
 
 
 
