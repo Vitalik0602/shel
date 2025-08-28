@@ -7,6 +7,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 const firebaseConfig = {
   apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
   authDomain: "shelkino.firebaseapp.com",
+  databaseURL: "https://shelkino-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "shelkino",
   storageBucket: "shelkino.firebasestorage.app",
   messagingSenderId: "380999159158",
@@ -534,6 +535,7 @@ function performSearch(q) {
 
 // ---------------- initial small helpers ----------------
 window.showToast = showToast;
+
 
 
 
