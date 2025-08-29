@@ -1,3 +1,4 @@
+```javascript
 // script.js (type="module")
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -134,7 +135,11 @@ function escapeHTML(s) {
 // Routing
 function goTo(route) {
   navLinks.forEach(a => a.classList.toggle("active", a.dataset.route === route));
-  updatedAt.textContent = `Обновлено: ${new Date().toLocaleString()}`;
+  if (updatedAt) {
+    updatedAt.textContent = `Обновлено: ${new Date().toLocaleString()}`;
+  } else {
+    console.warn("Element with id 'updatedAt' not found.");
+  }
   
   const routes = {
     home: renderHome,
@@ -841,3 +846,4 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+```
