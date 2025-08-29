@@ -16,7 +16,7 @@ const firebaseConfig = {
 };
 
 // Admin Phone Number (replace with actual admin phone number)
-const ADMIN_PHONE = "+79123456789"; // Example: use format +7xxxxxxxxxx
+const ADMIN_PHONE = "+79151199589"; // Example: use format +7xxxxxxxxxx
 
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR")) {
   alert("Подставьте ваш firebaseConfig в script.js (apiKey и др.) — инструкция в комментариях.");
@@ -572,3 +572,4 @@ function performSearch(q) {
 
 // Expose helper
 window.showToast = showToast;
+
