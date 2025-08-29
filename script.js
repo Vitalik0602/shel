@@ -1,7 +1,7 @@
 // script.js (type="module")
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-import { getAuth, signInWithPhoneNumber, RecaptchaVerifier, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -9,17 +9,17 @@ const firebaseConfig = {
   authDomain: "shelkino.firebaseapp.com",
   databaseURL: "https://shelkino-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "shelkino",
-  storageBucket: "shelkino.firebasestorage.app",
+  storageBucket: "shelkino.appspot.com",
   messagingSenderId: "380999159158",
   appId: "1:380999159158:web:eb659039985267cdb3fe57",
   measurementId: "G-GLHN9C443L"
 };
 
-// Admin Phone Number (replace with actual admin phone number)
-const ADMIN_PHONE = "+79123456789"; // Example: use format +7xxxxxxxxxx
+// Admin Email (replace with actual admin email)
+const ADMIN_EMAIL = "tvist2001@gmail.com";
 
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("AIzaSy")) {
-  alert("Пожалуйста, подставьте ваш собственный firebaseConfig в script.js, чтобы ваше приложение работало корректно и безопасно.");
+  alert("Пожалуйста, подставьте ваш собственный firebaseConfig в script.js.");
 }
 
 // Initialize Firebase
@@ -51,71 +51,56 @@ if (!displayName) {
 // Authentication
 let currentUser = null;
 let isAdmin = false;
-let recaptchaVerifier;
+const provider = new GoogleAuthProvider();
 
-try {
-  recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
-} catch (e) {
-  console.error("Recaptcha Verifier error", e);
-}
-
-// Phone Authentication
-function promptPhoneLogin() {
-  const phone = prompt("Введите номер телефона (формат: +79123456789)");
-  if (!phone) return;
-  signInWithPhoneNumber(auth, phone, recaptchaVerifier)
-    .then(confirmationResult => {
-      const code = prompt("Введите код из SMS");
-      if (!code) return;
-      return confirmationResult.confirm(code);
-    })
-    .then(result => {
-      const user = result.user;
-      showToast(`Добро пожаловать, ${displayName}!`);
-      isAdmin = user.phoneNumber === ADMIN_PHONE;
-      document.getElementById("adminLoginBtn").textContent = isAdmin ? "Выйти (Админ)" : "Выйти";
-      set(ref(db, `users/${user.uid}`), { 
-        name: displayName, 
-        phone: user.phoneNumber, 
-        lastSeen: serverTimestamp() 
-      });
-    })
-    .catch(err => {
-      showToast("Ошибка входа: " + err.message);
-      console.error("Phone auth error", err);
-    });
-}
-
-// Admin Login
-function adminLogin() {
+// Google Authentication
+function googleLogin() {
   if (currentUser) {
     signOut(auth).then(() => {
       showToast("Вы вышли.");
       document.getElementById("adminLoginBtn").textContent = "Войти";
       currentUser = null;
       isAdmin = false;
+    }).catch(err => {
+      console.error("Sign out error", err);
+      showToast("Ошибка выхода: " + err.message);
     });
     return;
   }
-  promptPhoneLogin();
+  signInWithPopup(auth, provider)
+    .then(result => {
+      const user = result.user;
+      showToast(`Добро пожаловать, ${displayName}!`);
+      isAdmin = user.email === ADMIN_EMAIL;
+      document.getElementById("adminLoginBtn").textContent = isAdmin ? "Выйти (Админ)" : "Выйти";
+      set(ref(db, `users/${user.uid}`), { 
+        name: displayName, 
+        email: user.email, 
+        lastSeen: serverTimestamp() 
+      });
+    })
+    .catch(err => {
+      console.error("Google auth error", err);
+      showToast("Ошибка входа: " + err.message);
+    });
 }
 
 // Auth State
 auth.onAuthStateChanged(user => {
   currentUser = user;
-  isAdmin = user && user.phoneNumber === ADMIN_PHONE;
+  isAdmin = user && user.email === ADMIN_EMAIL;
   document.getElementById("adminLoginBtn").textContent = user ? (isAdmin ? "Выйти (Админ)" : "Выйти") : "Войти";
   if (user) {
     set(ref(db, `users/${user.uid}`), { 
       name: displayName, 
-      phone: user.phoneNumber, 
+      email: user.email, 
       lastSeen: serverTimestamp() 
     });
   }
 });
 
-// Add admin login listener
-document.getElementById("adminLoginBtn").addEventListener("click", adminLogin);
+// Add login listener
+document.getElementById("adminLoginBtn").addEventListener("click", googleLogin);
 brand.addEventListener("click", () => goTo("home"));
 
 // Helpers
@@ -845,4 +830,3 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
-
