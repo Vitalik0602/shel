@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Щёлкино — Городской портал</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Портал Щёлкино</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" type="module"></script>
 </head>
 <body>
   <div id="app">
@@ -23,51 +24,40 @@
           <a data-route="jobs">Вакансии</a>
           <a data-route="schedule">Расписание</a>
           <a data-route="chat">Чат</a>
-          <a data-route="gallery">Галерея</a>
-          <a data-route="events">Афиша</a>
-          <a data-route="services">Услуги</a>
+          <button class="btn btn-primary" id="adminLoginBtn">Админ</button>
         </nav>
         <div class="search">
-          <input id="globalSearch" placeholder="Поиск..." />
-        </div>
-        <div class="auth">
-          <img id="userPhoto" class="avatar" alt="Аватар" style="display:none" />
-          <button id="adminLoginBtn" class="btn btn-ghost">Войти через Google</button>
+          <input id="globalSearch" placeholder="Поиск...">
         </div>
       </header>
-
-      <div id="updatedAt" class="muted" style="margin-top:8px"></div>
-
       <div class="grid">
-        <main id="pageContent"></main>
+        <main>
+          <div id="pageContent"></div>
+          <div id="updatedAt" class="muted">Обновлено: —</div>
+        </main>
         <aside>
-          <section class="card ads">
+          <div class="ads">
+            <li>Вакансии</li>
             <div class="ad">Зона рекламного баннера 1</div>
-            <div class="ad" style="margin-top: 12px">Зона рекламного баннера 2</div>
-          </section>
-          <section class="card" style="margin-top: 12px">
+            <div class="ad">Зона рекламного баннера 2</div>
+          </div>
+          <div class="card" style="margin-top:12px">
             <h3>Быстрые ссылки</h3>
             <ul>
-              <li id="asideJobsLink">Вакансии</li>
-              <li id="asideMapLink">Карта города</li>
-              <li id="asideGalleryLink">Галерея</li>
-              <li id="asideEventsLink">Афиша</li>
-              <li id="asideServicesLink">Услуги</li>
+              <li>Вакансии</li>
+              <li>Карта города</li>
             </ul>
-          </section>
-          <section class="card" style="margin-top: 12px">
+          </div>
+          <div class="card" style="margin-top:12px">
             <h3>Публичные уведомления</h3>
             <div id="announcements">Здесь будут важные объявления от администрации.</div>
-          </section>
+          </div>
         </aside>
       </div>
-
       <footer>© Портал Щёлкино — 2025</footer>
     </div>
-
-    <div id="toast" class="toast" style="display: none"></div>
+    <div id="toast" class="toast" style="display:none"></div>
   </div>
-
-  <script type="module" src="script.js"></script>
+  <div id="recaptcha-container"></div>
 </body>
 </html>
