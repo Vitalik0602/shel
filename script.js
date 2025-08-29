@@ -399,7 +399,7 @@ function postNews(e) {
 }
 
 function listenNewsList() {
-  const container = document.getElementById("newsList");
+  const container = document.getElementById("news");
   container.innerHTML = "<div class=\\"muted\\">Загрузка новостей...</div>";
   onValue(ref(db, "news"), snap => {
     if (!snap.exists()) {
@@ -837,4 +837,5 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+
 
