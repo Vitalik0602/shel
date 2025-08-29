@@ -17,7 +17,7 @@ const firebaseConfig = {
 
 // Список админов (email или uid). Заполните своими.
 const ADMIN_EMAILS = [
-  // "admin@пример.ру",
+  // "tvist2001@gmail.com",
 ];
 const ADMIN_UIDS = [
   // "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -837,3 +837,4 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+
