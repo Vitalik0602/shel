@@ -9,7 +9,7 @@ const firebaseConfig = {
   authDomain: "shelkino.firebaseapp.com",
   databaseURL: "https://shelkino-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "shelkino",
-  storageBucket: "shelkino.appspot.com",
+  storageBucket: "shelkino.firebasestorage.app",
   messagingSenderId: "380999159158",
   appId: "1:380999159158:web:eb659039985267cdb3fe57",
   measurementId: "G-GLHN9C443L"
@@ -845,3 +845,4 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+
