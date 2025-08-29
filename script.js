@@ -1,4 +1,3 @@
-```javascript
 // script.js (type="module")
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -846,4 +845,3 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
-```
