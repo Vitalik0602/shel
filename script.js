@@ -6,13 +6,14 @@ import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "http
 
 // ⚠️ ВАЖНО: ЗАМЕНИТЕ ЭТИ ДАННЫЕ НА ВАШИ ДАННЫЕ ИЗ FIREBASE
 const firebaseConfig = {
-  apiKey: "AIza...", // <-- ВАШ КЛЮЧ
-  authDomain: "your-project-id.firebaseapp.com",
-  databaseURL: "https://your-project-id.firebasedatabase.app",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef123456"
+  apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
+  authDomain: "shelkino.firebaseapp.com",
+  databaseURL: "https://shelkino-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "shelkino",
+  storageBucket: "shelkino.firebasestorage.app",
+  messagingSenderId: "380999159158",
+  appId: "1:380999159158:web:eb659039985267cdb3fe57",
+  measurementId: "G-GLHN9C443L"
 };
 
 // ⚠️ УКАЖИТЕ НОМЕР ТЕЛЕФОНА АДМИНИСТРАТОРА
@@ -358,3 +359,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     goTo(window.location.hash.substring(1) || "home");
 });
+
