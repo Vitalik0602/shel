@@ -1,10 +1,9 @@
-```javascript
-// script.js (type="module")
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+// script.js (type="module") — Google Sign-In + исправления
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
-// Firebase Config
+// --- Firebase Config (оставьте ваши значения) ---
 const firebaseConfig = {
   apiKey: "AIzaSyDOM82ihJg4m1XcbEKBVTvAP3IkEoeSLxw",
   authDomain: "shelkino.firebaseapp.com",
@@ -16,103 +15,107 @@ const firebaseConfig = {
   measurementId: "G-GLHN9C443L"
 };
 
-// Admin Email (replace with actual admin email)
-const ADMIN_EMAIL = "admin@example.com";
+// Список админов (email или uid). Заполните своими.
+const ADMIN_EMAILS = [
+  // "admin@пример.ру",
+];
+const ADMIN_UIDS = [
+  // "xxxxxxxxxxxxxxxxxxxxxxxxxxx"
+];
 
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("AIzaSy")) {
-  alert("Пожалуйста, подставьте ваш собственный firebaseConfig в script.js.");
+// Если вы переносите в другой проект — замените конфиг выше.
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("YOUR_")) {
+  console.warn("⚠ Пожалуйста, подставьте ваш собственный firebaseConfig в script.js.");
 }
 
-// Initialize Firebase
-let app, db, auth;
+// --- Firebase init ---
+let app, db, auth, provider;
 try {
   app = initializeApp(firebaseConfig);
   db = getDatabase(app);
   auth = getAuth();
+  provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
 } catch (err) {
   console.error("Firebase init error", err);
   showToast("Ошибка инициализации Firebase. Проверьте config.");
 }
 
-// UI References
+// --- UI refs ---
 const pageContent = document.getElementById("pageContent");
 const updatedAt = document.getElementById("updatedAt");
 const toast = document.getElementById("toast");
-const navLinks = document.querySelectorAll("nav a");
+const navLinks = Array.from(document.querySelectorAll("nav a[data-route]"));
 const brand = document.querySelector(".brand");
+const adminLoginBtn = document.getElementById("adminLoginBtn");
+const userPhoto = document.getElementById("userPhoto");
 
-// Local user name
-let displayName = localStorage.getItem("shchyolkino_name") || null;
-if (!displayName) {
-  const name = prompt("Как вас зовут? (это имя будет видно в чате)", "");
-  displayName = name && name.trim() ? name.trim() : "Гость";
-  localStorage.setItem("shchyolkino_name", displayName);
-}
+// --- Local display name ---
+let displayName = localStorage.getItem("shchyolkino_name") || "Гость";
 
-// Authentication
+// --- Auth state ---
 let currentUser = null;
 let isAdmin = false;
-const provider = new GoogleAuthProvider();
 
-// Google Authentication
-function googleLogin() {
+function isUserAdmin(user) {
+  if (!user) return false;
+  return (user.email && ADMIN_EMAILS.includes(user.email)) || ADMIN_UIDS.includes(user.uid);
+}
+
+function loginOrLogout() {
+  if (!auth) return;
   if (currentUser) {
     signOut(auth).then(() => {
       showToast("Вы вышли.");
-      document.getElementById("adminLoginBtn").textContent = "Войти";
-      currentUser = null;
-      isAdmin = false;
-    }).catch(err => {
-      console.error("Sign out error", err);
-      showToast("Ошибка выхода: " + err.message);
+    }).catch(e => showToast("Не удалось выйти: " + e.message));
+  } else {
+    signInWithPopup(auth, provider).catch(err => {
+      console.error(err);
+      showToast("Ошибка входа: " + err.message);
     });
-    return;
   }
-  signInWithPopup(auth, provider)
-    .then(result => {
-      const user = result.user;
-      showToast(`Добро пожаловать, ${displayName}!`);
-      isAdmin = user.email === ADMIN_EMAIL;
-      document.getElementById("adminLoginBtn").textContent = isAdmin ? "Выйти (Админ)" : "Выйти";
-      set(ref(db, `users/${user.uid}`), { 
-        name: displayName, 
-        email: user.email, 
-        lastSeen: serverTimestamp() 
-      });
-    })
-    .catch(err => {
-      console.error("Google auth error", {
-        code: err.code,
-        message: err.message,
-        stack: err.stack
-      });
-      if (err.code === "auth/popup-closed-by-user") {
-        showToast("Вход отменен: вы закрыли окно Google.");
-      } else {
-        showToast("Ошибка входа: " + err.message);
-      }
-    });
 }
 
-// Auth State
-auth.onAuthStateChanged(user => {
+if (adminLoginBtn) adminLoginBtn.addEventListener("click", loginOrLogout);
+
+if (brand) brand.addEventListener("click", () => goTo("home"));
+
+// Добавляем клики по пунктам меню
+navLinks.forEach(a => {
+  a.addEventListener("click", () => goTo(a.dataset.route));
+});
+
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  isAdmin = user && user.email === ADMIN_EMAIL;
-  document.getElementById("adminLoginBtn").textContent = user ? (isAdmin ? "Выйти (Админ)" : "Выйти") : "Войти";
+  isAdmin = isUserAdmin(user);
+  if (user && user.displayName) {
+    displayName = user.displayName;
+    localStorage.setItem("shchyolkino_name", displayName);
+  }
+  if (adminLoginBtn) adminLoginBtn.textContent = user ? (isAdmin ? "Выйти (Админ)" : "Выйти") : "Войти через Google";
+  if (userPhoto) {
+    if (user && user.photoURL) {
+      userPhoto.src = user.photoURL;
+      userPhoto.style.display = "block";
+    } else {
+      userPhoto.style.display = "none";
+    }
+  }
   if (user) {
-    set(ref(db, `users/${user.uid}`), { 
-      name: displayName, 
-      email: user.email, 
-      lastSeen: serverTimestamp() 
-    });
+    try {
+      await set(ref(db, `users/${user.uid}`), {
+        name: displayName || user.displayName || "Пользователь",
+        email: user.email || "",
+        photoURL: user.photoURL || "",
+        lastSeen: serverTimestamp()
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 });
 
-// Add login listener
-document.getElementById("adminLoginBtn").addEventListener("click", googleLogin);
-brand.addEventListener("click", () => goTo("home"));
-
-// Helpers
+// --- Helpers ---
 function showToast(msg) {
   if (toast) {
     toast.textContent = msg;
@@ -122,18 +125,18 @@ function showToast(msg) {
 }
 
 function escapeHTML(s) {
-  return String(s || "").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+  return String(s || "").replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
-// Routing
+// --- Routing ---
 function goTo(route) {
   navLinks.forEach(a => a.classList.toggle("active", a.dataset.route === route));
-  if (updatedAt) {
-    updatedAt.textContent = `Обновлено: ${new Date().toLocaleString()}`;
-  } else {
-    console.warn("Element with id 'updatedAt' not found.");
-  }
-  
+  if (updatedAt) updatedAt.textContent = `Обновлено: ${new Date().toLocaleString()}`;
+
   const routes = {
     home: renderHome,
     news: renderNews,
@@ -144,7 +147,7 @@ function goTo(route) {
     events: renderEvents,
     services: renderServices
   };
-  
+
   (routes[route] || renderHome)();
   window.location.hash = route;
 }
@@ -173,12 +176,11 @@ onValue(ref(db, "announcements"), snap => {
     return;
   }
   const val = snap.val() || {};
-  const arr = Object.values(val).sort((a, b) => b.time - a.time).slice(0, 5);
+  const arr = Object.values(val).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 5);
   announcementsEl.innerHTML = arr.map(a => `<div>${escapeHTML(a.text)}</div>`).join("");
 });
 
 // --- RENDERERS ---
-
 function renderHome() {
   pageContent.innerHTML = `
     <div class="hero">
@@ -385,7 +387,6 @@ function renderServices() {
 }
 
 // --- DATA LISTENERS AND POSTING ---
-
 function postNews(e) {
   e.preventDefault();
   if (!isAdmin) { showToast("Только администратор может добавлять новости."); return; }
@@ -393,28 +394,25 @@ function postNews(e) {
   const lead = document.getElementById("newsLead").value.trim();
   const data = { title, lead, time: serverTimestamp(), author: displayName };
   push(ref(db, "news"), data)
-    .then(() => {
-      showToast("Новость опубликована");
-      e.target.reset();
-    })
+    .then(() => { showToast("Новость опубликована"); e.target.reset(); })
     .catch(err => { console.error(err); showToast("Ошибка публикации."); });
 }
 
 function listenNewsList() {
   const container = document.getElementById("newsList");
-  container.innerHTML = "<div class=\"muted\">Загрузка новостей...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка новостей...</div>";
   onValue(ref(db, "news"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Новостей пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Новостей пока нет.</div>";
       return;
     }
     const news = snap.val();
-    const sortedNews = Object.values(news).sort((a, b) => b.time - a.time);
+    const sortedNews = Object.values(news).sort((a, b) => (b.time || 0) - (a.time || 0));
     container.innerHTML = sortedNews.map(n => `
       <article class="card fade-in">
         <h3 style="margin:0 0 6px 0">${escapeHTML(n.title)}</h3>
         <p>${escapeHTML(n.lead)}</p>
-        <div class="muted">${new Date(n.time).toLocaleString()}</div>
+        <div class="muted">${n.time ? new Date(n.time).toLocaleString() : ""}</div>
       </article>
     `).join("");
   });
@@ -427,13 +425,13 @@ function loadNewsPreview() {
       preview.innerHTML = "<div class='muted'>Новостей пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => b.time - a.time).slice(0, 3);
+    const arr = Object.values(snap.val()).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 3);
     preview.innerHTML = arr.map(n => `
       <div class="news-item" onclick="window.location.hash='news'">
         <div class="news-thumb"></div>
         <div>
           <div style="font-weight:700">${escapeHTML(n.title)}</div>
-          <div class="news-meta">${new Date(n.time).toLocaleDateString()} · ${escapeHTML(n.lead.slice(0, 100)) + (n.lead.length > 100 ? '...' : '')}</div>
+          <div class="news-meta">${n.time ? new Date(n.time).toLocaleDateString() : ""} · ${escapeHTML((n.lead || "").slice(0, 100))}${(n.lead && n.lead.length > 100) ? "..." : ""}</div>
         </div>
       </div>
     `).join("");
@@ -457,14 +455,14 @@ function postJob(e) {
 
 function listenJobsList() {
   const container = document.getElementById("jobsList");
-  container.innerHTML = "<div class=\"muted\">Загрузка вакансий...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка вакансий...</div>";
   onValue(ref(db, "jobs"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Вакансий пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Вакансий пока нет.</div>";
       return;
     }
     const jobs = snap.val();
-    const sortedJobs = Object.keys(jobs).map(key => ({...jobs[key], key})).sort((a, b) => b.time - a.time);
+    const sortedJobs = Object.keys(jobs).map(key => ({...jobs[key], key})).sort((a, b) => (b.time || 0) - (a.time || 0));
     container.innerHTML = sortedJobs.map(j => `
       <div class="job fade-in">
         <div>
@@ -498,12 +496,12 @@ function loadJobsPreview() {
       preview.innerHTML = "<div class='muted'>Вакансий пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => b.time - a.time).slice(0, 3);
+    const arr = Object.values(snap.val()).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 3);
     preview.innerHTML = arr.map(j => `
       <div class="job" onclick="window.location.hash='jobs'">
         <div>
           <div style="font-weight:700">${escapeHTML(j.title)}</div>
-          <div class="muted">${escapeHTML(j.company)} · ${escapeHTML(j.salary)}</div>
+          <div class="muted">${escapeHTML(j.company || "")} · ${escapeHTML(j.salary || "")}</div>
         </div>
         <div><button class="btn btn-ghost">Подробнее</button></div>
       </div>
@@ -523,18 +521,18 @@ function postRoute(e) {
 
 function listenRoutes() {
   const container = document.getElementById("routesList");
-  container.innerHTML = "<div class=\"muted\">Загрузка расписания...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка расписания...</div>";
   onValue(ref(db, "routes"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Расписания пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Расписания пока нет.</div>";
       return;
     }
     const routes = snap.val();
-    const sortedRoutes = Object.values(routes).sort((a, b) => b.time - a.time);
+    const sortedRoutes = Object.values(routes).sort((a, b) => (b.time || 0) - (a.time || 0));
     container.innerHTML = sortedRoutes.map(r => `
       <div class="card fade-in" style="margin-bottom: 8px">
         <div style="font-weight:700; font-size: 1.1em;">${escapeHTML(r.route)}</div>
-        <div class="muted" style="margin-top: 6px">${r.times.join(' · ')}</div>
+        <div class="muted" style="margin-top: 6px">${(r.times || []).join(' · ')}</div>
       </div>
     `).join("");
   });
@@ -547,11 +545,11 @@ function loadRoutesPreview() {
       preview.innerHTML = "<div class='muted'>Расписания пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => b.time - a.time).slice(0, 2);
+    const arr = Object.values(snap.val()).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 2);
     preview.innerHTML = arr.map(r => `
       <div class="route" onclick="window.location.hash='schedule'">
         <div style="font-weight:700">${escapeHTML(r.route)}</div>
-        <div class="muted">${r.times.slice(0, 4).join(' · ')}...</div>
+        <div class="muted">${(r.times || []).slice(0, 4).join(' · ')}...</div>
       </div>
     `).join("");
   }, { onlyOnce: true });
@@ -586,7 +584,7 @@ function listenChat() {
       el.innerHTML = `
         ${!isMe ? `<strong>${escapeHTML(m.user)}</strong>` : ''}
         <div>${escapeHTML(m.text)}</div>
-        <div class="muted" style="font-size:11px;margin-top:4px;text-align:right;">${new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+        <div class="muted" style="font-size:11px;margin-top:4px;text-align:right;">${m.time ? new Date(m.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}</div>
       `;
       box.appendChild(el);
     });
@@ -610,17 +608,17 @@ function postPhoto(e) {
 
 function listenGallery() {
   const container = document.getElementById("galleryList");
-  container.innerHTML = "<div class=\"muted\">Загрузка галереи...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка галереи...</div>";
   onValue(ref(db, "gallery"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Фото пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Фото пока нет.</div>";
       return;
     }
     const photos = snap.val();
-    const sortedPhotos = Object.values(photos).sort((a, b) => b.time - a.time);
+    const sortedPhotos = Object.values(photos).sort((a, b) => (b.time || 0) - (a.time || 0));
     container.innerHTML = sortedPhotos.map(p => `
       <div class="gallery-img" style="background-image: url(${escapeHTML(p.url)});" onclick="window.open('${escapeHTML(p.url)}', '_blank')">
-        <div class="muted" style="background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 0 0 12px 12px;">${escapeHTML(p.caption)}</div>
+        <div class="muted" style="background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 0 0 12px 12px;">${escapeHTML(p.caption || "")}</div>
       </div>
     `).join("");
   });
@@ -633,10 +631,10 @@ function loadGalleryPreview() {
       preview.innerHTML = "<div class='muted'>Фото пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => b.time - a.time).slice(0, 3);
+    const arr = Object.values(snap.val()).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 3);
     preview.innerHTML = arr.map(p => `
       <div class="gallery-img" style="background-image: url(${escapeHTML(p.url)});" onclick="window.location.hash='gallery'">
-        <div class="muted" style="background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 0 0 12px 12px;">${escapeHTML(p.caption)}</div>
+        <div class="muted" style="background: rgba(0,0,0,0.5); color: white; padding: 8px; border-radius: 0 0 12px 12px;">${escapeHTML(p.caption || "")}</div>
       </div>
     `).join("");
   }, { onlyOnce: true });
@@ -660,20 +658,20 @@ function postEvent(e) {
 
 function listenEvents() {
   const container = document.getElementById("eventsList");
-  container.innerHTML = "<div class=\"muted\">Загрузка событий...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка событий...</div>";
   onValue(ref(db, "events"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Событий пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Событий пока нет.</div>";
       return;
     }
     const events = snap.val();
-    const sortedEvents = Object.values(events).sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    const sortedEvents = Object.values(events).sort((a, b) => new Date(a.dateTime || 0) - new Date(b.dateTime || 0));
     container.innerHTML = sortedEvents.map(e => `
       <div class="event-item fade-in">
         <div style="font-weight:700">${escapeHTML(e.title)}</div>
-        <div class="muted" style="margin-top:4px">${new Date(e.dateTime).toLocaleString()}</div>
-        <div style="margin-top:4px">${escapeHTML(e.description)}</div>
-        <div class="muted" style="margin-top:4px">Место: ${escapeHTML(e.location) || 'Не указано'}</div>
+        <div class="muted" style="margin-top:4px">${e.dateTime ? new Date(e.dateTime).toLocaleString() : ""}</div>
+        <div style="margin-top:4px">${escapeHTML(e.description || "")}</div>
+        <div class="muted" style="margin-top:4px">Место: ${escapeHTML(e.location || 'Не указано')}</div>
       </div>
     `).join("");
   });
@@ -686,11 +684,11 @@ function loadEventsPreview() {
       preview.innerHTML = "<div class='muted'>Событий пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime)).slice(0, 2);
+    const arr = Object.values(snap.val()).sort((a, b) => new Date(a.dateTime || 0) - new Date(b.dateTime || 0)).slice(0, 2);
     preview.innerHTML = arr.map(e => `
       <div class="event-item" onclick="window.location.hash='events'">
         <div style="font-weight:700">${escapeHTML(e.title)}</div>
-        <div class="muted">${new Date(e.dateTime).toLocaleDateString()}</div>
+        <div class="muted">${e.dateTime ? new Date(e.dateTime).toLocaleDateString() : ""}</div>
       </div>
     `).join("");
   }, { onlyOnce: true });
@@ -713,18 +711,18 @@ function postService(e) {
 
 function listenServices() {
   const container = document.getElementById("servicesList");
-  container.innerHTML = "<div class=\"muted\">Загрузка услуг...</div>";
+  container.innerHTML = "<div class=\\"muted\\">Загрузка услуг...</div>";
   onValue(ref(db, "services"), snap => {
     if (!snap.exists()) {
-      container.innerHTML = "<div class=\"muted\">Услуг пока нет.</div>";
+      container.innerHTML = "<div class=\\"muted\\">Услуг пока нет.</div>";
       return;
     }
     const services = snap.val();
-    const sortedServices = Object.values(services).sort((a, b) => b.time - a.time);
+    const sortedServices = Object.values(services).sort((a, b) => (b.time || 0) - (a.time || 0));
     container.innerHTML = sortedServices.map(s => `
       <div class="service-item fade-in">
         <div style="font-weight:700">${escapeHTML(s.title)}</div>
-        <div style="margin-top:4px">${escapeHTML(s.description)}</div>
+        <div style="margin-top:4px">${escapeHTML(s.description || "")}</div>
         <div class="muted" style="margin-top:4px">Контакт: ${escapeHTML(s.contact)}</div>
       </div>
     `).join("");
@@ -738,17 +736,17 @@ function loadServicesPreview() {
       preview.innerHTML = "<div class='muted'>Услуг пока нет.</div>";
       return;
     }
-    const arr = Object.values(snap.val()).sort((a, b) => b.time - a.time).slice(0, 2);
+    const arr = Object.values(snap.val()).sort((a, b) => (b.time || 0) - (a.time || 0)).slice(0, 2);
     preview.innerHTML = arr.map(s => `
       <div class="service-item" onclick="window.location.hash='services'">
         <div style="font-weight:700">${escapeHTML(s.title)}</div>
-        <div class="muted">${escapeHTML(s.description.slice(0, 50)) + (s.description.length > 50 ? '...' : '')}</div>
+        <div class="muted">${escapeHTML((s.description || '').slice(0, 50))}${(s.description && s.description.length > 50) ? '...' : ''}</div>
       </div>
     `).join("");
   }, { onlyOnce: true });
 }
 
-// Search
+// --- Search ---
 document.getElementById("globalSearch").addEventListener("keypress", e => {
   if (e.key === "Enter") {
     const query = e.target.value.trim().toLowerCase();
@@ -776,60 +774,60 @@ function performSearch(q) {
 
   onValue(newsRef, newsSnap => {
     if (newsSnap.exists()) {
-      const foundNews = Object.values(newsSnap.val()).filter(n => 
-        (n.title.toLowerCase().includes(q) || n.lead.toLowerCase().includes(q))
+      const foundNews = Object.values(newsSnap.val()).filter(n =>
+        ((n.title || "").toLowerCase().includes(q) || (n.lead || "").toLowerCase().includes(q))
       );
       if (foundNews.length > 0) {
         found = true;
-        resultsHTML += `<h3>Новости</h3>` + foundNews.sort((a,b) => b.time - a.time).map(n => `
+        resultsHTML += `<h3>Новости</h3>` + foundNews.sort((a,b) => (b.time || 0) - (a.time || 0)).map(n => `
           <div class="card" style="cursor:pointer; margin-bottom: 8px;" onclick="window.location.hash='news'">
             ${escapeHTML(n.title)}
-            <div class="muted">${new Date(n.time).toLocaleDateString()}</div>
+            <div class="muted">${n.time ? new Date(n.time).toLocaleDateString() : ""}</div>
           </div>`).join("");
       }
     }
-    
+
     onValue(jobsRef, jobsSnap => {
       if (jobsSnap.exists()) {
-        const foundJobs = Object.values(jobsSnap.val()).filter(j => 
-          (j.title.toLowerCase().includes(q) || j.company.toLowerCase().includes(q))
+        const foundJobs = Object.values(jobsSnap.val()).filter(j =>
+          ((j.title || "").toLowerCase().includes(q) || (j.company || "").toLowerCase().includes(q))
         );
         if (foundJobs.length > 0) {
           found = true;
-          resultsHTML += `<h3 style="margin-top:12px">Вакансии</h3>` + foundJobs.sort((a,b) => b.time - a.time).map(j => `
+          resultsHTML += `<h3 style="margin-top:12px">Вакансии</h3>` + foundJobs.sort((a,b) => (b.time || 0) - (a.time || 0)).map(j => `
             <div class="card" style="cursor:pointer; margin-bottom: 8px;" onclick="window.location.hash='jobs'">
               ${escapeHTML(j.title)}
-              <div class="muted">${escapeHTML(j.company)}</div>
+              <div class="muted">${escapeHTML(j.company || "")}</div>
             </div>`).join("");
         }
       }
-      
+
       onValue(eventsRef, eventsSnap => {
         if (eventsSnap.exists()) {
-          const foundEvents = Object.values(eventsSnap.val()).filter(e => 
-            (e.title.toLowerCase().includes(q) || e.description.toLowerCase().includes(q))
+          const foundEvents = Object.values(eventsSnap.val()).filter(e =>
+            ((e.title || "").toLowerCase().includes(q) || (e.description || "").toLowerCase().includes(q))
           );
           if (foundEvents.length > 0) {
             found = true;
-            resultsHTML += `<h3 style="margin-top:12px">События</h3>` + foundEvents.sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime)).map(e => `
+            resultsHTML += `<h3 style="margin-top:12px">События</h3>` + foundEvents.sort((a,b) => new Date(a.dateTime || 0) - new Date(b.dateTime || 0)).map(e => `
               <div class="card" style="cursor:pointer; margin-bottom: 8px;" onclick="window.location.hash='events'">
                 ${escapeHTML(e.title)}
-                <div class="muted">${new Date(e.dateTime).toLocaleDateString()}</div>
+                <div class="muted">${e.dateTime ? new Date(e.dateTime).toLocaleDateString() : ""}</div>
               </div>`).join("");
           }
         }
-        
+
         onValue(servicesRef, servicesSnap => {
           if (servicesSnap.exists()) {
-            const foundServices = Object.values(servicesSnap.val()).filter(s => 
-              (s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+            const foundServices = Object.values(servicesSnap.val()).filter(s =>
+              ((s.title || "").toLowerCase().includes(q) || (s.description || "").toLowerCase().includes(q))
             );
             if (foundServices.length > 0) {
               found = true;
-              resultsHTML += `<h3 style="margin-top:12px">Услуги</h3>` + foundServices.sort((a,b) => b.time - a.time).map(s => `
+              resultsHTML += `<h3 style="margin-top:12px">Услуги</h3>` + foundServices.sort((a,b) => (b.time || 0) - (a.time || 0)).map(s => `
                 <div class="card" style="cursor:pointer; margin-bottom: 8px;" onclick="window.location.hash='services'">
                   ${escapeHTML(s.title)}
-                  <div class="muted">${escapeHTML(s.description.slice(0, 50)) + (s.description.length > 50 ? '...' : '')}</div>
+                  <div class="muted">${escapeHTML((s.description || "").slice(0, 50))}${(s.description && s.description.length > 50) ? '...' : ''}</div>
                 </div>`).join("");
             }
           }
@@ -839,4 +837,3 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
-```
