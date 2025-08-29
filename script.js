@@ -1,3 +1,4 @@
+```javascript
 // script.js (type="module")
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getDatabase, ref, push, onValue, serverTimestamp, set } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
@@ -16,7 +17,7 @@ const firebaseConfig = {
 };
 
 // Admin Email (replace with actual admin email)
-const ADMIN_EMAIL = "tvist2001@gmail.com";
+const ADMIN_EMAIL = "admin@example.com";
 
 if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("AIzaSy")) {
   alert("Пожалуйста, подставьте ваш собственный firebaseConfig в script.js.");
@@ -80,8 +81,16 @@ function googleLogin() {
       });
     })
     .catch(err => {
-      console.error("Google auth error", err);
-      showToast("Ошибка входа: " + err.message);
+      console.error("Google auth error", {
+        code: err.code,
+        message: err.message,
+        stack: err.stack
+      });
+      if (err.code === "auth/popup-closed-by-user") {
+        showToast("Вход отменен: вы закрыли окно Google.");
+      } else {
+        showToast("Ошибка входа: " + err.message);
+      }
     });
 }
 
@@ -830,3 +839,4 @@ function performSearch(q) {
     }, { onlyOnce: true });
   }, { onlyOnce: true });
 }
+```
